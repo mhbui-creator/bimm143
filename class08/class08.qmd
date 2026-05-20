@@ -1,0 +1,175 @@
+---
+title: "Class 08 Mini-Project"
+author: "Melissa Bui (PID: A19149673)"
+format: pdf
+toc: true
+---
+
+## Background
+
+The goal of this mini-project is for you to explore a complete analysos using the unsupervised learning techniques covered in class.
+
+Today we will analyze a biopsy data-set from fine needle aspiration (FNA) of breast mass.
+
+## Data Import
+
+The data is made available as a CSV file for download. We can read this in `read.csv()`.
+
+```{r}
+fna.data <- "WisconsinCancer.csv"
+
+wisc.df <- read.csv(fna.data, row.names=1)
+
+read.csv("WisconsinCancer.csv")
+
+```
+
+```{r}
+head(wisc.df, 3)
+```
+
+Make sure we don’t accidentally include this in our analysis, let’s create a new data.frame that omits this first column:
+
+```{r}
+wisc.data <- wisc.df[,-1]
+diagnosis <-as.factor(wisc.df$diagnosis)
+wisc.data
+```
+
+## Exploratory data
+
+> Q1. How many observations in this dataset?
+
+```{r}
+nrow(wisc.df)
+```
+
+There are 569 observations in this dataset. 
+
+> Q2.  How many of the observations have a malignant diagnosis?
+
+```{r}
+table((wisc.df$diagnosis) == "M")
+```
+There are 212 malignant observations.
+
+> Q3. How many variables/features in the data are suffixed with `_mean`?
+
+We can use `grep()` function to help us here:
+
+```{r}
+colnames(wisc.data)
+```
+
+```{r}
+grep("_mean$", colnames(wisc.data))
+```
+
+```{r}
+length(grep("_mean$", colnames(wisc.data)))
+```
+There are 10 variables suffixed with _mean.
+
+## Principal Component Analysis
+
+We need to scale before PCA with the `scale=TRUE` argument to `prcomp()`.
+
+```{r}
+wisc.pr <- prcomp(wisc.data, scale=TRUE)
+summary(wisc.data)
+```
+
+> Q4. From your results, what proportion of the original variance is captured by the first principal component (PC1)?
+
+The first principal component captures 0.4427, which is 44.27% of the total variance.
+
+> Q5. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
+
+It takes 3 principal components to explain at least 70% of the variance.
+
+> Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
+
+It takes 7 principal components to explain at least 90% of the variance
+
+> Q7. What stands out to you about this plot? Is it easy or difficult to understand? Why?
+
+```{r}
+biplot(wisc.pr)
+```
+
+This plot contains alot of labels and information about relationships between variables and samples, so it is not easy to understand at first glance from the overplotting and label clutter.
+
+> Q8. Generate a similar plot for principal components 1 and 3. What do you notice about these plots?
+
+Let's see the "PC score plot"
+
+```{r}
+library(ggplot2)
+
+ggplot(wisc.pr$x) +
+  aes(PC1, PC2, col=diagnosis) +
+  geom_point()
+```
+> Q8. Generate a similar plot for principal components 1 and 3. What do you notice about these plots?
+
+```{r}
+
+ggplot(wisc.pr$x) +
+  aes(PC1, PC3, col=diagnosis) +
+  geom_point()
+```
+
+> Q9.For the first principal component, what is the component of the loading vector (i.e. wisc.pr$rotation[,1]) for the feature concave.points_mean? This tells us how much this original feature contributes to the first PC. Are there any features with larger contributions than this one?
+
+The loading vector for concave.points_mean in PC1 is approximately [insert value], indicating that this feature has a strong positive contribution to the first principal component. This means it plays an important role in explaining the variation captured by PC1. However, it is not the largest contributor, as other features such as area_mean and perimeter_mean have even larger loadings. These features tend to dominate PC1 because they are strongly associated with overall tumor size and shape as these features are more likely to dominate PC1.
+
+## Hierarchical Clustering
+
+> Q12. Which method gives your favorite results for the same data.dist dataset? Explain your reasoning. *or* How well does the newly created model with four clusters separate out the two diagnoses?
+
+The ward.D2 method gives the most meaningful results since it minimizes within the cluster variance, this produces compact and well separated clusters. In contrast to methods like single linkage, which can create chaining and complete linkage, which can be overly strict, ward.D2 provides  clearer and more interpretable groupings. This makes it easier to identify logical structure in the data.
+
+## Combining methods
+
+```{r}
+d <- dist(wisc.pr$x[,1:7])
+wisc.pr.hclust <- hclust(d, method="ward.D2")
+plot(wisc.pr.hclust)
+abline(h=18, col="red")
+```
+
+```{r}
+wisc.pr.hclust.clusters <- cutree(wisc.pr.hclust, k=2)
+table(wisc.pr.hclust.clusters)
+```
+```{r}
+table(wisc.pr.hclust.clusters, diagnosis)
+```
+
+> Q14. How well do the hierarchical clustering models you created in the previous sections (i.e. without first doing PCA) do in terms of separating the diagnoses? Again, use the table() function to compare the output of each model (wisc.hclust.clusters and wisc.pr.hclust.clusters).
+
+```{r}
+table(wisc.pr.hclust.clusters, diagnosis)
+```
+
+The hierarchical clustering model without PCA does not separate the diagnoses as well as the PCA based model. Even though some clusters are enriched for  malignant or benign samples, there is more mixing and several small, less meaningful clusters. Hence, the separation is weaker and less clear compared to clustering on the principal components overall.
+
+## Prediction
+
+```{r}
+#url <- "new_samples.csv"
+url <- "https://tinyurl.com/new-samples-CSV"
+new <- read.csv(url)
+npc <- predict(wisc.pr, newdata=new)
+npc
+```
+
+```{r}
+plot(wisc.pr$x[,1:2], col=wisc.pr.hclust.clusters)
+points(npc[,1], npc[,2], col="blue", pch=16, cex=3)
+text(npc[,1], npc[,2], c(1,2), col="white")
+```
+
+> Q16. Which of these new patients should we prioritize for follow up based on your results?
+
+Patient 2 should be prioritized for follow up since it clusters with the malignant group in the PCA plot. This suggests it has characteristics more similar to malignant samples. Whereas with Patient 1, it clusters with the benign group and as a result is a lower priority.

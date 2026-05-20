@@ -1,0 +1,71 @@
+---
+title: "HW Class 6 (R Functions)"
+author: 'Melissa (PID: A19149673)'
+output: pdf_document
+---
+
+## Original code
+```{r}
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+# there is a small error in original code 
+#where s1 is used instead of s3 below
+s3.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+
+```
+
+## Homework Class 6
+
+> Q6: How would you generalize the original code above to work with any set of input protein structures?
+
+```{r}
+library(bio3d)
+
+# the plot_protein() function reads a protein structure from the PDB database 
+# and extracts B-factor values and generates a plot for visualization of these 
+# values
+# the inputs include: pdb_id, chain, and atom_type.
+# pdb_id is a character that specifies the PDB ID, the chain is the protein chain
+# additionally, the atom_type is the atom type to extract
+# the outputs include a plot of B-factors and residue position as well as 
+# a numeric vector of the B-factor values
+
+plot_protein <- function(pdb_id, chain = "A", atom_type = "CA") {
+  
+  # the PDB file is read 
+  pdb <- read.pdb(pdb_id)
+  
+  # the trim function is used to trim to chain A and alpha carbons
+  pdb_trim <- trim.pdb(pdb, chain = chain, elety = atom_type)
+  
+  # the b-factor values is extracted from the trimmed structure
+  b_factors <- pdb_trim$atom$b
+  
+  # b-factors are plotted across residues
+  # the typ ="l" creates a line plot
+  # the sse adds secondary structure such as helix and sheet regions
+  plotb3(b_factors, sse = pdb_trim, typ = "l", ylab = "Bfactor")
+  
+  # return values of the b-factor values 
+  return(b_factors)
+}
+```
+
+## Example output run
+```{r}
+plot_protein("4AKE")
+plot_protein("1AKE")
+plot_protein("1E4Y")
+```
+
+The plot_protein() function takes a PDB ID such as "4AKE" for the input and the optional arguments for the chain and atom type. The function serves to read a protein structure using the read.pdb() function which trims it to chain A alpha carbons using the trim function, trim.pdb(). This essentially extracts the B-factor values and plots to visualize the protein. Additionally, the function produces an output of a B-factor plot and returns a numeric vector of B-factor values.
