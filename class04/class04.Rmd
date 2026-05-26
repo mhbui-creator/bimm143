@@ -10,3 +10,4 @@ This assignment covers basic R programming concepts from BIMM143.
 
 ```{r}
 source("class04.R")
+```
