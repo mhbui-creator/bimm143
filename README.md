@@ -7,6 +7,6 @@ Class 4: [Introduction to R](class04/class04.pdf)
 
 Class 5: [Data viz with ggplot2](class05.qmd)
 
-Class 6: [R Function](class06/class06.html)
+Class 6: [R Function](class06/Class06.html)
 
 Class 7: [something else]()
