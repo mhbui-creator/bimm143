@@ -5,7 +5,7 @@ My classwork from [BIMM143 at UC San Diego Spring 2026](https://bioboot.github.i
 
 Class 4: [Introduction to R](class04/class04.pdf)
 
-Class 5: [Data viz with ggplot2](class05/Class 5.md)
+Class 5: [Data viz with ggplot2](class05/Class5.md)
 
 Class 6: [R Function](class05/Class05.md)
 
